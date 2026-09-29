@@ -1,9 +1,9 @@
 // Locates the Saule toolchain binaries (`saule`, `saule-lsp`) and the
 // workspace root to run them from.
 //
-// A port of the IntelliJ plugin's `SauleToolchain` (see
-// `editors/intellij/.../SauleToolchain.kt`), with the same resolution order so
-// both editors pick the same binary in the same project:
+// A port of the IntelliJ plugin's `SauleToolchain` (see `saule-intellij`,
+// `src/main/kotlin/com/saule/lang/SauleToolchain.kt`), with the same
+// resolution order so both editors pick the same binary in the same project:
 //
 //   1. Environment variable override (`SAULE_LSP_PATH` / `SAULE_PATH`).
 //   2. The configured path or toolchain directory in Settings.

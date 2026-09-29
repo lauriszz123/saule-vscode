@@ -2,11 +2,12 @@
 
 Full language support for `.sau` files: a TextMate grammar for syntax
 highlighting **plus** a Language Server Protocol client that talks to
-`saule-lsp`.
+`saule-lsp`, the language server of the
+[Saule](https://github.com/lauriszz123/saule) programming language.
 
 ## Features
 
-Powered by the `saule-lsp` server (`crates/saule-lsp`):
+Powered by the `saule-lsp` server:
 
 - **Diagnostics** — lex, parse, semantic, and type errors, live on every
   edit.
@@ -30,12 +31,18 @@ Provided by the extension itself, so they work with or without the server:
   files (along with two-space indentation, matching `saule fmt`).
 - **Run commands** — run the current file or the whole project in a terminal.
 
-## Build the toolchain (one time)
+## Install the toolchain (one time)
 
-From the repo root:
+The extension needs the `saule-lsp` binary. The installer puts it, and the
+`saule` CLI, in `~/.saule/bin` (`%USERPROFILE%\.saule\bin`) and adds that to
+your `PATH`:
 
 ```powershell
-cargo build --release
+irm https://lauriszz123.github.io/saule/install.ps1 | iex
+```
+
+```sh
+curl -fsSL https://lauriszz123.github.io/saule/install.sh | sh
 ```
 
 The extension discovers the binaries in the same order as the IntelliJ plugin,
@@ -48,15 +55,17 @@ so both pick the same build in the same project:
    sub-folder (say `examples/todo-app`) and still find the workspace-root build
    output — and the directory holding that `target/` becomes the server's
    working directory.
-4. `saule-lsp` / `saule` on your `PATH`.
+4. `saule-lsp` / `saule` on your `PATH` — where the installer puts them.
 
-No `PATH` setup is needed when you work inside the Saule repo.
+No `PATH` setup is needed when you work inside a built checkout of the
+[language repository](https://github.com/lauriszz123/saule); step 3 finds
+`target/release/saule-lsp` on its own.
 
-## Install the extension
+## Build and install the extension
 
 ```powershell
-# from the repo root
-cd editors\vscode
+git clone https://github.com/lauriszz123/saule-vscode.git
+cd saule-vscode
 npm install
 npm run compile
 
@@ -64,10 +73,10 @@ npm run compile
 # or package and install:
 npm install -g @vscode/vsce
 vsce package
-code --install-extension saule-26.1.0.vsix
+code --install-extension saule-<version>.vsix
 ```
 
-For zero-build syntax-only dev, copy the `editors/vscode` folder into
+For zero-build syntax-only dev, copy this folder into
 `%USERPROFILE%\.vscode\extensions\saule\` and reload — but the LSP
 features need the compiled `out/extension.js` (`npm run compile`).
 
@@ -103,17 +112,36 @@ settings still win.
 ## Editor parity
 
 `src/indent.ts` is a port of the IntelliJ plugin's `SauleIndentModel` and
-shares its test corpus with the Neovim integration's `lua/saule/indent.lua`.
-All three are derived from the printer in `crates/saule-fmt/src/lib.rs`. If you
-change one, change all of them and re-run every suite:
+shares its test corpus with the Neovim plugin's `lua/saule/indent.lua`. All
+three are derived from the printer in `crates/saule-fmt/src/lib.rs` in the
+language repository. The three clients live in separate repositories now, so
+changing one is a change to all three: update
+[saule-intellij](https://github.com/lauriszz123/saule-intellij) and
+[saule-nvim](https://github.com/lauriszz123/saule-nvim) alongside it and
+re-run every suite.
 
 ```powershell
 npm test
 ```
 
-## Syntax-highlighting scopes
+## Syntax highlighting
+
+`syntaxes/saule.tmLanguage.json` is a **copy**. The grammar is written once, in
+the language repository at `grammar/saule.tmLanguage.json`, next to the lexer
+it has to agree with, and is read from there by the documentation site as
+well. A .vsix has to carry the file it ships, so this repository keeps a copy
+and refreshes it after an upstream change:
+
+```powershell
+npm run sync:grammar              # from github.com/lauriszz123/saule
+npm run sync:grammar -- ../saule  # from a local checkout
+```
 
 Colours come from the user's active theme via these scopes:
 `keyword.control`, `keyword.declaration`, `entity.name.type`,
 `entity.name.function`, `string.quoted.double`, `comment.line`,
 `constant.numeric`, `constant.language`, `variable.language`.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

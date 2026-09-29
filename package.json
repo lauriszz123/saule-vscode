@@ -5,6 +5,9 @@
   "version": "26.1.0",
   "publisher": "saule",
   "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/lauriszz123/saule-vscode.git" },
+  "homepage": "https://lauriszz123.github.io/saule/",
+  "bugs": { "url": "https://github.com/lauriszz123/saule/issues" },
   "engines": { "vscode": "^1.91.0" },
   "categories": ["Programming Languages", "Formatters", "Linters"],
   "keywords": ["saule", "sau", "language server", "lsp"],
@@ -117,7 +120,8 @@
     "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true})\"",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "tsc -p ./ && node --test out/*.test.js"
+    "test": "tsc -p ./ && node --test out/*.test.js",
+    "sync:grammar": "node scripts/sync-grammar.mjs"
   },
   "dependencies": {
     "vscode-languageclient": "^10.0.0"

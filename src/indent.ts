@@ -5,10 +5,11 @@
 // pressing Enter and for the auto-dedent of `end`.
 //
 // This is a port of the IntelliJ plugin's `SauleIndentModel` (see
-// `editors/intellij/.../format/SauleIndentModel.kt`), kept deliberately
-// line-for-line comparable with it so the two editors indent identically.
-// Both are in turn derived from the printer in `crates/saule-fmt/src/lib.rs`;
-// keep all three in step or the editors and `saule fmt` will disagree.
+// `saule-intellij`, `src/main/kotlin/com/saule/lang/format/SauleIndentModel.kt`),
+// kept deliberately line-for-line comparable with it so the two editors indent
+// identically. Both are in turn derived from the printer in
+// `crates/saule-fmt/src/lib.rs` in the `saule` repository; keep all three in
+// step or the editors and `saule fmt` will disagree.
 
 /** Saule's canonical layout, shared with the indent model's fallbacks. */
 export const INDENT_DEFAULT = 2;

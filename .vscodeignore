@@ -5,6 +5,7 @@
 # automatically, so only production deps are bundled.
 .vscode/**
 src/**
+scripts/**
 tsconfig*.json
 .gitignore
 package-lock.json
