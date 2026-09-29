@@ -80,6 +80,23 @@ For zero-build syntax-only dev, copy this folder into
 `%USERPROFILE%\.vscode\extensions\saule\` and reload — but the LSP
 features need the compiled `out/extension.js` (`npm run compile`).
 
+## Versioning
+
+The extension version tracks the toolchain it targets — `<year>.<build>`, the
+same number `saule --version` prints, plus a `.0` because the Marketplace
+validates the manifest as strict semver. It has to be written into
+`package.json` and both places `package-lock.json` keeps it, so one script
+writes all three:
+
+```powershell
+npm run stamp -- 26.8
+npm run stamp -- 26.8 --check   # verify, change nothing
+```
+
+Run the stamp before `vsce package`, and `--check` in CI — it turns "bumped
+the manifest and forgot the lockfile" into a failed job rather than an
+`npm ci` that refuses to install.
+
 ## Settings
 
 | Setting | Default | Purpose |

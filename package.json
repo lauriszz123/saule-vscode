@@ -121,7 +121,8 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "tsc -p ./ && node --test out/*.test.js",
-    "sync:grammar": "node scripts/sync-grammar.mjs"
+    "sync:grammar": "node scripts/sync-grammar.mjs",
+    "stamp": "node scripts/stamp-version.mjs"
   },
   "dependencies": {
     "vscode-languageclient": "^10.0.0"
