@@ -5,6 +5,7 @@
   "version": "26.1.0",
   "publisher": "saule",
   "license": "MIT",
+  "icon": "icon.png",
   "repository": { "type": "git", "url": "https://github.com/lauriszz123/saule-vscode.git" },
   "homepage": "https://lauriszz123.github.io/saule/",
   "bugs": { "url": "https://github.com/lauriszz123/saule/issues" },
