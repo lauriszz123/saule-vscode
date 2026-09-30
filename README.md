@@ -1,3 +1,5 @@
+<img src="icon.png" alt="Saule" width="128" align="right">
+
 # Saule for VS Code
 
 Full language support for `.sau` files: a TextMate grammar for syntax
