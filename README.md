@@ -33,6 +33,18 @@ Provided by the extension itself, so they work with or without the server:
   files (along with two-space indentation, matching `saule fmt`).
 - **Run commands** — run the current file or the whole project in a terminal.
 
+## Install
+
+Search for **Saule** in the Extensions view, install it from the
+[Marketplace](https://marketplace.visualstudio.com/items?itemName=saule.saule),
+or run:
+
+```sh
+code --install-extension saule.saule
+```
+
+The extension also needs the Saule toolchain, once per machine.
+
 ## Install the toolchain (one time)
 
 The extension needs the `saule-lsp` binary. The installer puts it, and the
@@ -62,25 +74,6 @@ Step 3 is off by default because a repository can commit a `target/debug/saule-l
 of its own, and opening a folder should not run it. Turn it on if you work on
 the [language itself](https://github.com/lauriszz123/saule). The extension is
 also disabled in untrusted workspaces.
-
-## Build and install the extension
-
-```powershell
-git clone https://github.com/lauriszz123/saule-vscode.git
-cd saule-vscode
-npm install
-npm run compile
-
-# then either press F5 / "Run Extension" from Run & Debug,
-# or package and install:
-npm install -g @vscode/vsce
-vsce package
-code --install-extension saule-<version>.vsix
-```
-
-For zero-build syntax-only dev, copy this folder into
-`%USERPROFILE%\.vscode\extensions\saule\` and reload — but the LSP
-features need the compiled `out/extension.js` (`npm run compile`).
 
 ## Versioning
 
@@ -160,6 +153,27 @@ Colours come from the user's active theme via these scopes:
 `keyword.control`, `keyword.declaration`, `entity.name.type`,
 `entity.name.function`, `string.quoted.double`, `comment.line`,
 `constant.numeric`, `constant.language`, `variable.language`.
+
+## Build from source
+
+Only needed to work on the extension itself.
+
+```powershell
+git clone https://github.com/lauriszz123/saule-vscode.git
+cd saule-vscode
+npm install
+npm run compile
+
+# then either press F5 / "Run Extension" from Run & Debug,
+# or package and install:
+npm install -g @vscode/vsce
+vsce package
+code --install-extension saule-<version>.vsix
+```
+
+For zero-build syntax-only dev, copy this folder into
+`%USERPROFILE%\.vscode\extensions\saule\` and reload — but the LSP
+features need the compiled `out/extension.js` (`npm run compile`).
 
 ## License
 

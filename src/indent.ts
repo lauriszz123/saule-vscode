@@ -28,6 +28,17 @@ export const INDENT_DEFAULT = 2;
  * `LoopHeader` is a `for` / `while` block whose header has not reached its
  * `do` yet. It is a block like any other — it just remembers that the next
  * `do` belongs to the header and so must not open a second one.
+ *
+ * The rest are what keep this in step with `saule fmt`:
+ *
+ * `FnHeader` is a `fn` whose parameter list has not closed. Its body has not
+ * started, so it is no level yet.
+ *
+ * `InlineCase` is `case … then value`. An arm on one line steps nothing in.
+ *
+ * `Bracket` is open with nothing decided. `SettledBracket` was followed by a
+ * line break, so its contents are one level in. `HuggedBracket` holds a block
+ * on the line it opened on — `f(fn()` — and stays no level at all.
  */
 const enum Frame {
   Block,
@@ -35,6 +46,31 @@ const enum Frame {
   Interface,
   Case,
   Bracket,
+  FnHeader,
+  InlineCase,
+  SettledBracket,
+  HuggedBracket,
+}
+
+function isBracket(frame: Frame | undefined): boolean {
+  return (
+    frame === Frame.Bracket ||
+    frame === Frame.SettledBracket ||
+    frame === Frame.HuggedBracket
+  );
+}
+
+/** Turn the undecided brackets on top of the stack into `to`. */
+function decideBrackets(stack: Frame[], to: Frame): void {
+  for (let i = stack.length - 1; i >= 0 && stack[i] === Frame.Bracket; i--) {
+    stack[i] = to;
+  }
+}
+
+/** Push a frame that opens a block, which hugs any bracket still undecided. */
+function pushBlock(stack: Frame[], frame: Frame): void {
+  decideBrackets(stack, Frame.HuggedBracket);
+  stack.push(frame);
 }
 
 /** Keywords that open a block closed by `end` (or, for `repeat`, `until`). */
@@ -153,20 +189,34 @@ export function indentForLine(
 
   let firstOnLine: string | undefined;
   let previous: string | undefined;
+  let beforePrevious: string | undefined;
+  let previousStart = 0;
   for (const token of tokens(text, lineEnd)) {
+    const newLine = text.slice(previousStart, token.start).includes("\n");
+    if (newLine) decideBrackets(stack, Frame.SettledBracket);
     if (token.start >= lineStart) {
       firstOnLine = token.word;
       break;
     }
-    apply(token.word, previous, stack);
+    apply(token.word, previous, beforePrevious, stack, newLine);
+    beforePrevious = previous;
     previous = token.word;
+    previousStart = token.start;
   }
 
   let blocks = 0;
+  let brackets = 0;
   for (const frame of stack) {
-    if (frame !== Frame.Bracket) blocks++;
+    if (frame === Frame.Bracket || frame === Frame.SettledBracket) {
+      brackets++;
+    } else if (
+      frame !== Frame.HuggedBracket &&
+      frame !== Frame.FnHeader &&
+      frame !== Frame.InlineCase
+    ) {
+      blocks++;
+    }
   }
-  const brackets = stack.length - blocks;
   const top = stack.length > 0 ? stack[stack.length - 1] : undefined;
 
   let blockDedent = 0;
@@ -182,7 +232,7 @@ export function indentForLine(
     // of a `match` already sits at the body level.
     if (top === Frame.Case) blockDedent = 1;
   } else if (CLOSE_BRACKETS.has(firstOnLine)) {
-    if (top === Frame.Bracket) bracketDedent = 1;
+    if (top === Frame.Bracket || top === Frame.SettledBracket) bracketDedent = 1;
   }
 
   return new SauleIndent(
@@ -194,8 +244,18 @@ export function indentForLine(
 function apply(
   word: string,
   previous: string | undefined,
+  beforePrevious: string | undefined,
   stack: Frame[],
+  newLine: boolean,
 ): void {
+  if (
+    previous === "then" &&
+    !newLine &&
+    stack.length > 0 &&
+    stack[stack.length - 1] === Frame.Case
+  ) {
+    stack[stack.length - 1] = Frame.InlineCase;
+  }
   const top = stack.length > 0 ? stack[stack.length - 1] : undefined;
   if (word === "interface") {
     stack.push(Frame.Interface);
@@ -203,13 +263,29 @@ function apply(
     // Also covers lambdas — `fn(x) … end` is a block like any other. A `fn` in
     // type position (`f: fn(T) -> U`) opens nothing: it is a type, it has no
     // body, and no `end` will ever come for it.
-    if (top !== Frame.Interface && (previous === undefined || !TYPE_POSITION.has(previous))) {
-      stack.push(Frame.Block);
+    // `name: fn(x) … end` in a call or a table is a value, not an annotation.
+    // Only a parameter list says `name: fn(T) -> U` and means a type.
+    const namedValue =
+      previous === ":" &&
+      isBracket(top) &&
+      stack[stack.length - 2] !== Frame.FnHeader &&
+      stack[stack.length - 2] !== Frame.Interface;
+    // `(fn() -> T)?` after a `:` is a type in brackets.
+    const bracketedType =
+      previous === "(" &&
+      beforePrevious !== undefined &&
+      TYPE_POSITION.has(beforePrevious);
+    if (
+      top !== Frame.Interface &&
+      !bracketedType &&
+      (previous === undefined || namedValue || !TYPE_POSITION.has(previous))
+    ) {
+      pushBlock(stack, Frame.FnHeader);
     }
   } else if (BLOCK_OPENERS.has(word)) {
-    stack.push(Frame.Block);
+    pushBlock(stack, Frame.Block);
   } else if (LOOP_OPENERS.has(word)) {
-    stack.push(Frame.LoopHeader);
+    pushBlock(stack, Frame.LoopHeader);
   } else if (word === "do") {
     // Closing a loop header costs nothing — `for`/`while` opened the block
     // already — but a `do` anywhere else is a trailing block, and that one is
@@ -217,17 +293,22 @@ function apply(
     if (top === Frame.LoopHeader) {
       stack[stack.length - 1] = Frame.Block;
     } else {
-      stack.push(Frame.Block);
+      pushBlock(stack, Frame.Block);
     }
   } else if (CLOSERS.has(word)) {
     closeBlock(stack);
   } else if (word === "case") {
-    if (top === Frame.Case) stack.pop();
+    if (top === Frame.Case || top === Frame.InlineCase) stack.pop();
     stack.push(Frame.Case);
   } else if (OPEN_BRACKETS.has(word)) {
     stack.push(Frame.Bracket);
   } else if (CLOSE_BRACKETS.has(word)) {
-    if (top === Frame.Bracket) stack.pop();
+    if (isBracket(top)) {
+      stack.pop();
+      if (stack[stack.length - 1] === Frame.FnHeader) {
+        stack[stack.length - 1] = Frame.Block;
+      }
+    }
   }
 }
 
@@ -240,6 +321,7 @@ function closeBlock(stack: Frame[]): void {
   while (
     stack.length > 0 &&
     stack[stack.length - 1] !== Frame.Block &&
+    stack[stack.length - 1] !== Frame.FnHeader &&
     stack[stack.length - 1] !== Frame.LoopHeader &&
     stack[stack.length - 1] !== Frame.Interface
   ) {
@@ -254,8 +336,8 @@ function openCaseFrames(stack: Frame[]): number {
   for (let i = stack.length - 1; i >= 0; i--) {
     if (stack[i] === Frame.Case) {
       n++;
-    } else if (stack[i] === Frame.Bracket) {
-      // Half-typed code; not a level of its own here.
+    } else if (isBracket(stack[i]) || stack[i] === Frame.InlineCase) {
+      // Half-typed code or a one-line arm; not a level of its own here.
     } else {
       return n;
     }

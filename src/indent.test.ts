@@ -6,6 +6,7 @@
 // each other, so they share a test corpus. Add a case to one, add it to all.
 
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import {
@@ -253,11 +254,25 @@ test("a new line after fn-typed signatures starts at column zero", () => {
   assertIndent(SauleIndent.ZERO, indentOfLine(text, 9));
 });
 
+test("agrees with saule fmt on the shared conformance program", () => {
+  const text = readFileSync("test/fixtures/indent-conformance.sau", "utf8").replace(/\r\n/g, "\n");
+  let start = 0;
+  text.split("\n").forEach((line, i) => {
+    const end = start + line.length;
+    if (line.trim() !== "") {
+      const got = indentForLine(text, start, end);
+      const written = (line.length - line.trimStart().length) / 2;
+      assert.equal(got.blocks + got.continuations, written, `line ${i + 1}: ${line}`);
+    }
+    start = end + 1;
+  });
+});
+
 test("an anonymous fn argument is still a block", () => {
   // The counter-case the type-position rule must not break: `fn` after a comma
   // opens a real body.
   assertIndent(
-    new SauleIndent(1, 1),
+    new SauleIndent(1, 0),
     indentOfLine("map(xs, fn(x: integer) -> integer\n\n", 1),
   );
 });
