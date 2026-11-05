@@ -53,7 +53,8 @@
       "patterns": [
         { "name": "constant.numeric.integer.hexadecimal.saule", "match": "\\b0[xX][0-9a-fA-F_]+\\b" },
         { "name": "constant.numeric.integer.binary.saule", "match": "\\b0[bB][01_]+\\b" },
-        { "name": "constant.numeric.float.saule", "match": "(?<![\\w.])(?:\\d+\\.\\d+|\\.\\d+)(?:[fF]\\b)?" },
+        { "name": "constant.numeric.float.saule", "match": "(?<![\\w.])(?:\\d+\\.\\d+|\\.\\d+)(?:[eE][+-]?\\d+)?(?:[fF]\\b)?" },
+        { "name": "constant.numeric.float.saule", "match": "\\b\\d+[eE][+-]?\\d+(?:[fF]\\b)?" },
         { "name": "constant.numeric.float.saule", "match": "\\b\\d+[fF]\\b" },
         { "name": "constant.numeric.integer.saule", "match": "\\b\\d+\\b" }
       ]
@@ -62,7 +63,7 @@
       "patterns": [
         {
           "name": "keyword.control.saule",
-          "match": "\\b(if|else|elseif|then|end|for|while|repeat|until|do|in|break|continue|return|throw|try|catch|match|case|when)\\b"
+          "match": "\\b(if|else|elseif|then|end|for|while|repeat|until|do|in|break|continue|return|throw|try|catch|finally|match|case|when)\\b"
         },
         {
           "name": "keyword.declaration.saule",
@@ -143,7 +144,7 @@
       "patterns": [
         {
           "name": "support.type.primitive.saule",
-          "match": "\\b(integer|float|string|boolean|any|nil|table|userdata|thread)\\b"
+          "match": "\\b(integer|float|string|bytes|byte|boolean|any|nil|table|userdata|thread)\\b"
         },
         {
           "comment": "PascalCase identifiers treated as type/class names",

@@ -18,6 +18,6 @@
   "wordPattern": "(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>\\/\\?\\s]+)",
   "indentationRules": {
     "increaseIndentPattern": "^\\s*((export|local|static)\\s+)*(class|interface|enum|fn)\\b|^\\s*(repeat|try|catch|else)\\b|^\\s*case\\b(?:[^-]|-(?!-))*\\bthen\\b|^(?:[^-]|-(?!-))*(\\b(then|do)\\s*|[\\(\\[\\{]\\s*)(--.*)?$|^(?:[^-]|-(?!-))*\\bmatch\\b(?!.*\\bend\\b)",
-    "decreaseIndentPattern": "^\\s*((end|until|else|elseif|catch|case)\\b|[\\)\\]\\}])"
+    "decreaseIndentPattern": "^\\s*((end|until|else|elseif|catch|finally|case)\\b|[\\)\\]\\}])"
   }
 }

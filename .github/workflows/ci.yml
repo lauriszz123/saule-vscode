@@ -1,0 +1,50 @@
+name: CI
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx --yes @vscode/vsce package --out saule.vsix
+      - uses: actions/upload-artifact@v4
+        with:
+          name: saule-vsix
+          path: saule.vsix
+
+  # A `v26.20` tag publishes that build. The two tokens are repository secrets;
+  # see CHANGELOG.md for the order to release in.
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: The tag and the manifest agree
+        run: npm run -s stamp -- "${GITHUB_REF_NAME#v}" --check
+      - uses: actions/download-artifact@v4
+        with:
+          name: saule-vsix
+      - run: npx --yes @vscode/vsce publish --packagePath saule.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - run: npx --yes ovsx publish saule.vsix
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}

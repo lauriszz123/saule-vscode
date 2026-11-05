@@ -59,7 +59,7 @@ const BLOCK_OPENERS = new Set([
 const LOOP_OPENERS = new Set(["while", "for"]);
 
 /** Keywords that continue the enclosing block: written one level out. */
-const CONTINUATIONS = new Set(["else", "elseif", "catch"]);
+const CONTINUATIONS = new Set(["else", "elseif", "catch", "finally"]);
 
 /** Keywords that close the enclosing block: also written one level out. */
 const CLOSERS = new Set(["end", "until"]);
@@ -121,23 +121,19 @@ export class SauleIndent {
   /**
    * Render as literal indent text, honouring tabs / spaces / sizes.
    *
-   * VS Code has a single `tabSize`, so one continuation is two indents — the
-   * ratio the IntelliJ code style defaults to (indent 2, continuation 4) and
-   * the one `saule fmt` prints.
+   * One continuation is one indent, in spaces or in tabs alike, because that
+   * is what `saule fmt` prints: every still-open bracket steps its contents in
+   * by a single level. Weighting it double put the caret far to the right of
+   * where the formatter later moved the line, inside any call or table.
    */
   render(tabSize: number, insertSpaces: boolean): string {
     const indentSize = tabSize > 0 ? tabSize : INDENT_DEFAULT;
-    const continuationSize = indentSize * 2;
+    const levels = this.blocks + this.continuations;
 
     if (insertSpaces) {
-      return " ".repeat(
-        this.blocks * indentSize + this.continuations * continuationSize,
-      );
+      return " ".repeat(levels * indentSize);
     }
-    // Tabs to indent, spaces to align — a continuation is alignment inside an
-    // unclosed bracket, so it gets spaces; block levels are real indentation
-    // and get hard tabs. (IntelliJ calls this "smart tabs", and defaults it on.)
-    return "\t".repeat(this.blocks) + " ".repeat(this.continuations * continuationSize);
+    return "\t".repeat(levels);
   }
 }
 

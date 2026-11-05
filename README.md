@@ -47,21 +47,21 @@ irm https://lauriszz123.github.io/saule/install.ps1 | iex
 curl -fsSL https://lauriszz123.github.io/saule/install.sh | sh
 ```
 
-The extension discovers the binaries in the same order as the IntelliJ plugin,
-so both pick the same build in the same project:
+The extension discovers the binaries in the same order as the IntelliJ plugin
+and the Neovim plugin:
 
 1. `SAULE_LSP_PATH` / `SAULE_PATH` environment variables.
-2. `saule.server.path` / `saule.cli.path`, or `saule.toolchainDir`.
-3. Cargo build output, walking **up** from each workspace folder looking for
-   `target/release` then `target/debug`. Walking up is what lets you open a
-   sub-folder (say `examples/todo-app`) and still find the workspace-root build
-   output — and the directory holding that `target/` becomes the server's
-   working directory.
-4. `saule-lsp` / `saule` on your `PATH` — where the installer puts them.
+2. `saule.server.path` / `saule.cli.path`, or `saule.toolchainDir`, from your
+   User settings. A project's `.vscode/settings.json` cannot set these.
+3. Only with `saule.allowProjectBuild` on: Cargo build output, walking **up**
+   from each workspace folder looking for `target/release` then `target/debug`.
+4. `saule-lsp` / `saule` on your `PATH`.
+5. `~/.saule/bin` (or `$SAULE_HOME/bin`), where the installer puts them.
 
-No `PATH` setup is needed when you work inside a built checkout of the
-[language repository](https://github.com/lauriszz123/saule); step 3 finds
-`target/release/saule-lsp` on its own.
+Step 3 is off by default because a repository can commit a `target/debug/saule-lsp`
+of its own, and opening a folder should not run it. Turn it on if you work on
+the [language itself](https://github.com/lauriszz123/saule). The extension is
+also disabled in untrusted workspaces.
 
 ## Build and install the extension
 

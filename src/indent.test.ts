@@ -171,6 +171,37 @@ test("try catch", () => {
   `);
 });
 
+test("try catch finally", () => {
+  assertRoundTrips(`
+    fn f()
+      try
+        risky()
+      catch e: any
+        log(e)
+      finally
+        close()
+      end
+    end
+  `);
+});
+
+test("try finally", () => {
+  assertRoundTrips(`
+    fn f()
+      try
+        risky()
+      finally
+        close()
+      end
+    end
+  `);
+});
+
+test("finally is a keyword that dedents as it is typed", () => {
+  const text = "try\n  risky()\n  finally";
+  assert.equal(keywordTypedAt(text, text.length), true);
+});
+
 test("lambda block body", () => {
   assertRoundTrips(`
     local handler = fn(x: integer)
@@ -316,10 +347,11 @@ test("keywordTypedAt fires only on a bare closer", () => {
 
 test("render uses tabs when the editor asks for them", () => {
   assert.equal(new SauleIndent(2, 0).render(2, true), "    ");
-  assert.equal(new SauleIndent(1, 1).render(2, true), "      ");
-  // Tabs to indent, spaces to align.
+  // A bracket level is one indent, as `saule fmt` prints it.
+  assert.equal(new SauleIndent(1, 1).render(2, true), "    ");
+  assert.equal(new SauleIndent(2, 2).render(4, true), " ".repeat(16));
   assert.equal(new SauleIndent(2, 0).render(2, false), "\t\t");
-  assert.equal(new SauleIndent(1, 1).render(2, false), "\t    ");
+  assert.equal(new SauleIndent(1, 1).render(2, false), "\t\t");
 });
 
 // ── helpers ─────────────────────────────────────────────────────────────────

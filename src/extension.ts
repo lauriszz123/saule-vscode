@@ -87,7 +87,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
       if (
         e.affectsConfiguration("saule.server.path") ||
         e.affectsConfiguration("saule.server.extraArgs") ||
-        e.affectsConfiguration("saule.toolchainDir")
+        e.affectsConfiguration("saule.toolchainDir") ||
+        e.affectsConfiguration("saule.allowProjectBuild")
       ) {
         void restart(context);
       }
@@ -107,8 +108,9 @@ async function start(context: ExtensionContext): Promise<void> {
     const choice = await window.showWarningMessage(
       "Saule language server (`saule-lsp`) not found. Syntax highlighting and " +
         "indentation are active, but diagnostics, hover, and navigation are " +
-        "disabled. Build it with `cargo build --release -p saule-lsp`, or set " +
-        "`saule.server.path`.",
+        "disabled. Install the toolchain from " +
+        "https://lauriszz123.github.io/saule/, or set `saule.server.path`. " +
+        "Working on Saule itself? Turn on `saule.allowProjectBuild`.",
       "Open Settings",
     );
     if (choice === "Open Settings") {
