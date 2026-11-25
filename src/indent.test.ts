@@ -227,6 +227,38 @@ test("a fn type annotation is not a block", () => {
   `);
 });
 
+test("a fn type in a type alias is not a block", () => {
+  assertRoundTrips(`
+    type Handler = fn(string) -> nil
+    export type Visit<T> = fn(table<float>, T) -> T
+    type Nested = fn(fn() -> nil, table<fn(integer) -> boolean>) -> nil
+
+    fn each(names: table<string>, handler: Handler)
+      for name in names do
+        handler(name)
+      end
+    end
+
+    local last = 1
+  `);
+});
+
+test("a fn type after is is not a block", () => {
+  assertRoundTrips(`
+    fn callable(v: any) -> boolean
+      if v is fn() -> nil then
+        return true
+      elseif v is not fn(integer) -> boolean then
+        return false
+      end
+
+      return v is table
+    end
+
+    local done = callable(1)
+  `);
+});
+
 test("a fn type in a local annotation is not a block", () => {
   assertRoundTrips(`
     local double: fn(integer) -> integer = fn(x: integer) -> integer

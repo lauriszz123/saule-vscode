@@ -125,13 +125,15 @@ const CLOSE_BRACKETS = new Set([")", "]", "}"]);
  * a stray block on top, the `)` closing the enclosing parameter list no longer
  * matches a bracket frame, so that stays open too.
  *
- * Only these four contexts qualify, and each admits nothing but a type: `:`
+ * Only these contexts qualify, and each admits nothing but a type: `:`
  * ascribes one, `->` introduces a return type, `<` opens a generic argument
- * list, and `as` casts to one. Notably absent are `,` and `(` — an anonymous
+ * list, `as` casts to one and `is` tests against one. (The right-hand side of
+ * a `type Name = …` declaration is a type as well, but nothing about the
+ * token before a `fn` there says so: the scan tracks that line by line.) Notably absent are `,` and `(` — an anonymous
  * function passed as an argument (`map(xs, fn(x) … end)`) follows those, and
  * it really is a block.
  */
-const TYPE_POSITION = new Set([":", "->", "<", "as"]);
+const TYPE_POSITION = new Set([":", "->", "<", "as", "is"]);
 
 /**
  * How far one source line is indented.
@@ -191,6 +193,8 @@ export function indentForLine(
   let previous: string | undefined;
   let beforePrevious: string | undefined;
   let previousStart = 0;
+  // Inside `type Name = …`, where every `fn` is a type and opens nothing.
+  let inAlias = false;
   for (const token of tokens(text, lineEnd)) {
     const newLine = text.slice(previousStart, token.start).includes("\n");
     if (newLine) decideBrackets(stack, Frame.SettledBracket);
@@ -198,7 +202,15 @@ export function indentForLine(
       firstOnLine = token.word;
       break;
     }
-    apply(token.word, previous, beforePrevious, stack, newLine);
+    // An alias is one line, and begins it: `type`, or `export type`.
+    if (newLine || previous === undefined) inAlias = false;
+    if (
+      token.word === "type" &&
+      (newLine || previous === undefined || previous === "export")
+    ) {
+      inAlias = true;
+    }
+    apply(token.word, previous, beforePrevious, stack, newLine, inAlias);
     beforePrevious = previous;
     previous = token.word;
     previousStart = token.start;
@@ -247,6 +259,7 @@ function apply(
   beforePrevious: string | undefined,
   stack: Frame[],
   newLine: boolean,
+  inAlias: boolean,
 ): void {
   if (
     previous === "then" &&
@@ -275,9 +288,13 @@ function apply(
       previous === "(" &&
       beforePrevious !== undefined &&
       TYPE_POSITION.has(beforePrevious);
+    // `v is not fn() -> nil`: the `not` belongs to the `is`.
+    const negatedTest = previous === "not" && beforePrevious === "is";
     if (
       top !== Frame.Interface &&
       !bracketedType &&
+      !inAlias &&
+      !negatedTest &&
       (previous === undefined || namedValue || !TYPE_POSITION.has(previous))
     ) {
       pushBlock(stack, Frame.FnHeader);
